@@ -1,0 +1,7 @@
+{
+  "name": "ruka",
+  "main": "index.js",
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.0"
+  }
+}
