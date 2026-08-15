@@ -1,12 +1,31 @@
 import makeWASocket, { useMultiFileAuthState, DisconnectReason } from '@whiskeysockets/baileys'
 import { Boom } from '@hapi/boom'
+import readline from 'readline'
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+})
+const question = (text) => new Promise((resolve) => rl.question(text, resolve))
 
 async function iniciar() {
     const { state, saveCreds } = await useMultiFileAuthState('auth')
+
+    // PIDE EL NUMERO PARA EL CODIGO
+    let phoneNumber = await question('Pon tu número con código de país ej: 5218715786936 > ')
+    phoneNumber = phoneNumber.replace(/[^0-9]/g, '')
+
     const sock = makeWASocket({
         auth: state,
-        printQRInTerminal: true
+        printQRInTerminal: false, // ya no queremos QR
+        browser: ["Ubuntu", "Chrome", "20.0.04"]
     })
+
+    if (!sock.authState.creds.registered) {
+        const code = await sock.requestPairingCode(phoneNumber)
+        console.log(`\nTU CÓDIGO DE VINCULACIÓN ES: ${code}\n`)
+        console.log('En WhatsApp > Dispositivos vinculados > Vincular con número de teléfono')
+    }
 
     sock.ev.on('creds.update', saveCreds)
 
@@ -18,6 +37,7 @@ async function iniciar() {
             if(shouldReconnect) iniciar()
         } else if(connection === 'open') {
             console.log('Ruka lista y conectada!')
+            rl.close()
         }
     })
 
